@@ -1,0 +1,303 @@
+/* ============================================
+   FUNDACIÓN ANDAMIO — Sistema de diseño (v2)
+   Ubicación: src/assets/design-system.css
+   REEMPLAZA el archivo anterior por completo.
+   Importar en src/main.js:  import './assets/design-system.css'
+   ============================================ */
+
+/* ---------- 1. TOKENS ---------- */
+:root {
+  --morado-hero:    #320659;
+  --morado-nav:     #3a115f;
+  --morado-acento: #6b21a8;
+  --morado-vivo:    #7e22ce;
+  --lila:           #d2b8ec;
+  --lila-suave:     #a78bca;
+  --lila-fondo:     #f3ebfb;
+
+  --noche:          #0f081a;
+  --claro:          #f6f3f9;
+  --blanco:         #ffffff;
+  --tinta:          #1a1523;
+  --gris:           #6b6577;
+  --borde-claro:    #e4dfec;
+  --borde-oscuro:   rgba(210, 184, 236, 0.18);
+
+  --verde:          #2f7d54;
+  --verde-fondo:    #e7f4ec;
+  --ambar:          #8a6410;
+  --ambar-fondo:    #fbf2dc;
+
+  --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono:  'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+
+  --ancho-max: 1200px;
+  --radio: 4px;
+}
+
+/* ---------- 2. RESET ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--tinta);
+  background: var(--claro);
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+
+/* ---------- 3. TIPOGRAFÍA ---------- */
+.titulo-xl, .titulo-l, .titulo-m, .titulo-s {
+  font-family: var(--serif);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.titulo-xl { font-size: clamp(3rem, 7vw, 5.5rem); line-height: 1.02; }
+.titulo-l  { font-size: clamp(2.2rem, 4.5vw, 3.4rem); }
+.titulo-m  { font-size: clamp(1.4rem, 2.5vw, 1.9rem); }
+.titulo-s  { font-size: 1.2rem; }
+
+.etiqueta {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--lila-suave);
+  margin: 0 0 1.2rem;
+}
+.etiqueta--claro { color: var(--morado-acento); }
+
+.parrafo { font-size: 1.05rem; max-width: 62ch; color: var(--gris); }
+.parrafo--oscuro { color: rgba(255, 255, 255, 0.72); }
+
+.precio {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--morado-acento);
+}
+
+/* ---------- 4. LAYOUT ---------- */
+.contenedor {
+  width: 100%;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+.seccion { padding-block: clamp(4rem, 9vw, 7.5rem); }
+.seccion--corta { padding-block: clamp(2.5rem, 5vw, 4rem); }
+
+.seccion--clara  { background: var(--claro);       color: var(--tinta); }
+.seccion--noche  { background: var(--noche);       color: var(--blanco); }
+.seccion--morada { background: var(--morado-hero); color: var(--blanco); }
+
+.cabecera-pagina {
+  background: var(--morado-hero);
+  color: var(--blanco);
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+.cabecera-pagina .parrafo { color: rgba(255, 255, 255, 0.72); }
+
+/* ---------- 5. BOTONES ---------- */
+.btn {
+  display: inline-block;
+  padding: 0.95rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: var(--radio);
+  border: 1px solid transparent;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.btn--solido  { background: var(--blanco); color: var(--morado-hero); }
+.btn--solido:hover { background: var(--lila); }
+
+.btn--morado  { background: var(--morado-acento); color: var(--blanco); }
+.btn--morado:hover { background: var(--morado-vivo); }
+
+.btn--contorno {
+  background: transparent;
+  color: var(--blanco);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.btn--contorno:hover { border-color: var(--blanco); background: rgba(255,255,255,.08); }
+
+.btn--fantasma {
+  background: transparent;
+  color: var(--tinta);
+  border-color: var(--borde-claro);
+}
+.btn--fantasma:hover { border-color: var(--morado-acento); color: var(--morado-acento); }
+
+.btn--bloque { display: block; width: 100%; text-align: center; }
+
+.btn:disabled,
+.btn--inactivo {
+  background: var(--lila);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.enlace-acento {
+  font-weight: 600;
+  color: var(--lila);
+  border-bottom: 1px solid var(--lila);
+  padding-bottom: 3px;
+}
+.seccion--clara .enlace-acento {
+  color: var(--morado-acento);
+  border-color: var(--morado-acento);
+}
+
+/* ---------- 6. TARJETAS ---------- */
+.tarjeta {
+  background: var(--blanco);
+  border: 1px solid var(--borde-claro);
+  border-radius: var(--radio);
+  padding: 1.75rem;
+}
+.tarjeta--oscura {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--borde-oscuro);
+}
+
+.seleccionable {
+  background: var(--blanco);
+  border: 1px solid var(--borde-claro);
+  border-radius: var(--radio);
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+.seleccionable:hover { border-color: var(--lila-suave); }
+.seleccionable.activa {
+  border-color: var(--morado-acento);
+  background: var(--lila-fondo);
+}
+
+/* ---------- 7. BADGES ---------- */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radio);
+  border: 1px solid var(--borde-claro);
+  color: var(--morado-acento);
+  background: var(--blanco);
+}
+.badge--aprobado  { color: var(--verde); background: var(--verde-fondo); border-color: var(--verde); }
+.badge--pendiente { color: var(--ambar); background: var(--ambar-fondo); border-color: var(--ambar); }
+.badge--alerta    { color: var(--blanco); background: var(--morado-acento); border-color: transparent; }
+
+/* ---------- 8. FORMULARIOS ---------- */
+.campo { margin-bottom: 1.35rem; }
+
+.campo__label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gris);
+  margin-bottom: 0.5rem;
+}
+
+.campo__input,
+.campo__select,
+.campo__area {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 0.98rem;
+  color: var(--tinta);
+  background: var(--blanco);
+  border: 1px solid var(--borde-claro);
+  border-radius: var(--radio);
+  padding: 0.85rem 1rem;
+  transition: border-color 0.18s ease;
+}
+.campo__area { min-height: 120px; resize: vertical; }
+
+.campo__input::placeholder,
+.campo__area::placeholder { color: #a9a3b5; }
+
+.campo__input:focus,
+.campo__select:focus,
+.campo__area:focus {
+  outline: none;
+  border-color: var(--morado-acento);
+}
+
+.campo__fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* ---------- 9. PASOS ---------- */
+.pasos {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.paso {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a9a3b5;
+  padding-bottom: 5px;
+  border-bottom: 2px solid transparent;
+}
+.paso__num {
+  display: grid;
+  place-items: center;
+  width: 20px; height: 20px;
+  border: 1px solid currentColor;
+  border-radius: var(--radio);
+  font-size: 0.68rem;
+}
+.paso--activo { color: var(--morado-acento); border-bottom-color: var(--morado-acento); }
+.paso--hecho  { color: var(--gris); }
+.pasos__sep   { color: #cfc8da; }
+
+/* ---------- 10. BARRA DE PROGRESO ---------- */
+.progreso {
+  height: 3px;
+  background: var(--borde-claro);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progreso__relleno { height: 100%; background: var(--morado-acento); }
+
+/* ---------- 11. ACCESIBILIDAD ---------- */
+:focus-visible { outline: 2px solid var(--morado-acento); outline-offset: 3px; }
+.seccion--noche :focus-visible,
+.cabecera-pagina :focus-visible { outline-color: var(--lila); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+@media (max-width: 640px) {
+  .campo__fila { grid-template-columns: 1fr; }
+}
