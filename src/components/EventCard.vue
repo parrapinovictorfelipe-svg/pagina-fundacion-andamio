@@ -1,6 +1,5 @@
 <script setup>
-// Definimos las propiedades que la tarjeta va a recibir desde afuera
-defineProps({
+çdefineProps({
   titulo: String,
   descripcion: String,
   estado: String

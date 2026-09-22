@@ -1,4 +1,4 @@
-// Ubicación: src/router/index.js
+
 import { createRouter, createWebHistory } from 'vue-router'
 
 import HomeView from '@/views/HomeView.vue'
@@ -13,7 +13,6 @@ const router = createRouter({
     { path: '/donaciones',  name: 'donaciones',  component: () => import('@/views/DonacionesView.vue') },
     { path: '/admin',       name: 'admin',       component: () => import('@/views/AdminView.vue') },
   ],
-  // Al cambiar de página, vuelve arriba
   scrollBehavior() {
     return { top: 0 }
   },
