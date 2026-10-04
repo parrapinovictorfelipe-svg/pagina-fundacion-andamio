@@ -1,17 +1,34 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import galeria from '@/assets/galeria.js'
 import Carousel from '@/components/Carousel.vue'
 
-const fotoHero = galeria[15].src   // gal-16, escena de Lluvia Roja
-const fotoSobre = galeria[4].src   // gal-05, taller comunitario con niños
+const fotoHero = galeria[15].src   
+const fotoSobre = galeria[4].src   
 
-// Fechas de ejemplo — cámbialas por las funciones reales
-const proximas = [
-  { fecha: 'EDITAR', obra: 'El Bunde del Agua', sala: 'EDITAR' },
-  { fecha: 'EDITAR', obra: 'Lluvia Roja',        sala: 'EDITAR' },
-  { fecha: 'EDITAR', obra: 'Negrita',            sala: 'EDITAR' },
-]
+// Estados para el consumo de la API
+const proximas = ref([])
+const cargando = ref(true)
+const error = ref(false)
+
+const cargarFunciones = async () => {
+  try {
+    const respuesta = await fetch('https://6ac199f9309c92da039c6a30.mockapi.io/funciones')
+    if (!respuesta.ok) throw new Error('Error en la petición')
+    
+    const datos = await respuesta.json()
+    proximas.value = datos
+  } catch (err) {
+    error.value = true
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(() => {
+  cargarFunciones()
+})
 
 const cifras = [
   { valor: '16+',   etiqueta: 'Años de trayectoria' },
@@ -70,14 +87,26 @@ const montos = [
         <RouterLink to="/donaciones" class="btn btn--contorno">Apoyar</RouterLink>
       </div>
 
-      <!-- Franja de próximas funciones -->
-      <ul class="proximas">
-        <li v-for="f in proximas" :key="f.obra" class="proximas__item">
+      <!-- Renderizado condicional de la API -->
+      <div v-if="cargando" class="estado-api">
+        <p>⏳ Cargando próximas funciones...</p>
+      </div>
+      
+      <div v-else-if="error" class="estado-api estado-api--error">
+        <p>❌ Error al cargar las funciones. Intenta de nuevo más tarde.</p>
+      </div>
+
+      <ul v-else-if="proximas.length > 0" class="proximas">
+        <li v-for="f in proximas" :key="f.id" class="proximas__item">
           <span class="proximas__fecha">{{ f.fecha }}</span>
           <span class="proximas__obra">{{ f.obra }}</span>
           <span class="proximas__sala">{{ f.sala }}</span>
         </li>
       </ul>
+
+      <div v-else class="estado-api">
+        <p>No hay funciones programadas en este momento.</p>
+      </div>
     </div>
 
     <div class="hero__marco">
@@ -175,6 +204,22 @@ const montos = [
 </template>
 
 <style scoped>
+/* Estados de carga API */
+.estado-api {
+  margin-top: 3.5rem;
+  padding: 1rem;
+  border-left: 3px solid var(--lila);
+  background: rgba(255,255,255,0.05);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--lila-suave);
+}
+
+.estado-api--error {
+  border-left-color: #ff6b6b;
+  color: #ffb3b3;
+}
+
 /* ============ HERO ============ */
 .hero {
   display: grid;
@@ -198,7 +243,6 @@ const montos = [
 
 .hero__acciones { display: flex; gap: 1rem; flex-wrap: wrap; }
 
-/* Franja de próximas funciones */
 .proximas {
   list-style: none;
   margin: 3.5rem 0 0;
@@ -231,7 +275,6 @@ const montos = [
   filter: brightness(1.7);
 }
 
-/* Foto del hero */
 .hero__marco { position: relative; }
 
 .hero__foto {
@@ -263,7 +306,6 @@ const montos = [
   grid-template-columns: repeat(4, 1fr);
 }
 
-/* Los divisores verticales finos entre cifras */
 .cifras__item {
   text-align: center;
   padding-inline: 1rem;
@@ -323,7 +365,6 @@ const montos = [
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* Columnas separadas por líneas verticales, sin tarjetas */
 .programa {
   padding-inline: clamp(1rem, 3vw, 2.5rem);
   border-left: 1px solid var(--borde-oscuro);

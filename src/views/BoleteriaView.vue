@@ -2,9 +2,7 @@
 import { ref, computed } from 'vue'
 import galeria from '@/assets/galeria.js'
 
-/* ---------- DATOS ----------
-   Todos los campos marcados EDITAR son de ejemplo — reemplázalos
-   por la fecha, sala, aforo y precio reales de cada función. */
+
 const obras = [
   {
     id: 1, genero: 'Teatro folclórico', titulo: 'El Bunde del Agua',

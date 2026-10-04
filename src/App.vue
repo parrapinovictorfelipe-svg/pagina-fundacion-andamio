@@ -17,7 +17,7 @@ import logo from '@/assets/logo-andamio.jpg'
         <RouterLink to="/boleteria">Boletería</RouterLink>
         <RouterLink to="/inscripcion">Inscripción</RouterLink>
         <RouterLink to="/donaciones">Donaciones</RouterLink>
-        <RouterLink to="/admin" class="nav__admin">Admin</RouterLink>
+        <!-- <RouterLink to="/admin" class="nav__admin">Admin</RouterLink> -->
       </nav>
     </div>
   </header>
@@ -71,7 +71,7 @@ import logo from '@/assets/logo-andamio.jpg'
 
     <div class="contenedor pie__legal">
       <span>© 2026 Fundación Andamio — Todos los derechos reservados</span>
-      <RouterLink to="/admin">Administración →</RouterLink>
+      <!-- <RouterLink to="/admin">Administración →</RouterLink> -->
     </div>
   </footer>
 </template>
@@ -82,7 +82,10 @@ import logo from '@/assets/logo-andamio.jpg'
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--morado-nav);
+  /* Fondo transparente con desenfoque */
+  background: rgba(50, 6, 89, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--borde-oscuro);
 }
 

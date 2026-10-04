@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import galeria from '@/assets/galeria.js'
 
@@ -16,106 +16,50 @@ const generos = [
 ]
 const generoActivo = ref('Todas')
 
-// Todos los campos marcados EDITAR son de ejemplo — reemplázalos por
-// la información real de cada obra (sinopsis, duración, fechas, precio).
-const obras = [
-  {
-    id: 1,
-    genero: 'Teatro folclórico',
-    titulo: 'El Bunde del Agua',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de El Bunde del Agua.',
-    duracion: 'EDITAR',
-    publico: 'EDITAR',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[19].src, // gal-20
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-  {
-    id: 2,
-    genero: 'Teatro contemporáneo',
-    titulo: 'Lluvia Roja',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de Lluvia Roja.',
-    duracion: 'EDITAR',
-    publico: 'EDITAR',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[15].src, // gal-16
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-  {
-    id: 3,
-    genero: 'Teatro contemporáneo',
-    titulo: 'Gotita Herida',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de Gotita Herida.',
-    duracion: 'EDITAR',
-    publico: 'EDITAR',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[12].src, // gal-13
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-  {
-    id: 4,
-    genero: 'Comedia',
-    titulo: 'La Abuela Pone la Casa y Nosotros Ponemos el Drama',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de La Abuela Pone la Casa y Nosotros Ponemos el Drama.',
-    duracion: 'EDITAR',
-    publico: 'EDITAR',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[8].src, // gal-09
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-  {
-    id: 5,
-    genero: 'Títeres / Infantil',
-    titulo: 'Títeres El Sol y La Luna',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de Títeres El Sol y La Luna.',
-    duracion: 'EDITAR',
-    publico: 'Todo público',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[1].src, // gal-02
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-  {
-    id: 6,
-    genero: 'Teatro comunitario',
-    titulo: 'En la Mitad del Río',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de En la Mitad del Río.',
-    duracion: 'EDITAR',
-    publico: 'EDITAR',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[5].src, // gal-06
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-  {
-    id: 7,
-    genero: 'Teatro folclórico',
-    titulo: 'Negrita',
-    director: 'Dirección: EDITAR',
-    sinopsis: 'EDITAR — sinopsis de Negrita.',
-    duracion: 'EDITAR',
-    publico: 'EDITAR',
-    desde: 0,
-    alerta: null,
-    imagen: galeria[20].src, // gal-21
-    funciones: [{ fecha: 'EDITAR', hora: 'EDITAR', sala: 'EDITAR' }],
-  },
-]
+// Variables para el consumo de la API y el manejo de estados
+const obras = ref([])
+const cargando = ref(true)
+const error = ref(false)
+
+// Función para descargar los datos de la MockAPI
+const cargarObras = async () => {
+  try {
+    const respuesta = await fetch('https://6ac199f9309c92da039c6a30.mockapi.io/funciones')
+    if (!respuesta.ok) throw new Error('Error al conectar con la API')
+    
+    const datos = await respuesta.json()
+    
+    // Como la MockAPI que creamos solo tiene id, fecha, obra y sala, 
+    // mapeamos esos datos para que encajen con la estructura visual de la tarjeta
+    obras.value = datos.map((item, index) => ({
+      id: item.id,
+      genero: 'Teatro contemporáneo', // Dato fijo temporal para las pruebas
+      titulo: item.obra,
+      director: 'Dirección: Fundación Andamio',
+      sinopsis: 'Sinopsis de la obra teatral ' + item.obra + ' a presentarse en ' + item.sala + '.',
+      duracion: '90 min',
+      publico: 'Todo público',
+      desde: 35000,
+      alerta: null,
+      imagen: galeria[index % galeria.length].src, // Asigna una imagen de la galería
+      funciones: [{ fecha: item.fecha.split(' - ')[0], hora: item.fecha.split(' - ')[1], sala: item.sala }]
+    }))
+  } catch (err) {
+    error.value = true
+  } finally {
+    cargando.value = false
+  }
+}
+
+// Ejecutamos la carga al iniciar el componente
+onMounted(() => {
+  cargarObras()
+})
 
 const obrasFiltradas = computed(() =>
   generoActivo.value === 'Todas'
-    ? obras
-    : obras.filter((o) => o.genero === generoActivo.value)
+    ? obras.value
+    : obras.value.filter((o) => o.genero === generoActivo.value)
 )
 
 function pesos(n) {
@@ -154,53 +98,86 @@ function comprar(obra) {
         </button>
       </div>
 
+      <!-- Manejo de Estados de la API -->
+      <div v-if="cargando" class="estado-api">
+        <p>⏳ Cargando cartelera...</p>
+      </div>
+      
+      <div v-else-if="error" class="estado-api estado-api--error">
+        <p>❌ Error al cargar las obras. Intenta de nuevo más tarde.</p>
+      </div>
+
+      <div v-else-if="obrasFiltradas.length === 0" class="estado-api">
+        <p>No hay obras programadas para esta categoría en este momento.</p>
+      </div>
+
       <!-- Lista de obras -->
-      <article v-for="obra in obrasFiltradas" :key="obra.id" class="obra">
-        <div class="obra__marco">
-          <img :src="obra.imagen" :alt="obra.titulo" class="obra__foto" />
-          <span v-if="obra.alerta" class="badge badge--alerta obra__alerta">
-            {{ obra.alerta }}
-          </span>
-        </div>
-
-        <div class="obra__cuerpo">
-          <div class="obra__encabezado">
-            <span class="badge">{{ obra.genero }}</span>
-            <h2 class="titulo-m">{{ obra.titulo }}</h2>
+      <template v-else>
+        <article v-for="obra in obrasFiltradas" :key="obra.id" class="obra">
+          <div class="obra__marco">
+            <img :src="obra.imagen" :alt="obra.titulo" class="obra__foto" />
+            <span v-if="obra.alerta" class="badge badge--alerta obra__alerta">
+              {{ obra.alerta }}
+            </span>
           </div>
 
-          <p class="obra__autor">{{ obra.director }}</p>
-          <p class="parrafo obra__sinopsis">{{ obra.sinopsis }}</p>
-
-          <p class="obra__meta">
-            <span>{{ obra.duracion }}</span>
-            <span class="obra__punto">·</span>
-            <span>{{ obra.publico }}</span>
-          </p>
-
-          <ul class="horarios">
-            <li v-for="f in obra.funciones" :key="f.fecha + f.hora" class="horario">
-              <span class="horario__fecha">{{ f.fecha }} · {{ f.hora }}</span>
-              <span class="horario__sala">{{ f.sala }}</span>
-            </li>
-          </ul>
-
-          <div class="obra__pie">
-            <div>
-              <p class="obra__desde">Desde</p>
-              <p class="precio">{{ obra.desde ? pesos(obra.desde) : 'EDITAR' }}</p>
+          <div class="obra__cuerpo">
+            <div class="obra__encabezado">
+              <span class="badge">{{ obra.genero }}</span>
+              <h2 class="titulo-m">{{ obra.titulo }}</h2>
             </div>
-            <button class="btn btn--morado" @click="comprar(obra)">
-              Comprar boletas
-            </button>
+
+            <p class="obra__autor">{{ obra.director }}</p>
+            <p class="parrafo obra__sinopsis">{{ obra.sinopsis }}</p>
+
+            <p class="obra__meta">
+              <span>{{ obra.duracion }}</span>
+              <span class="obra__punto">·</span>
+              <span>{{ obra.publico }}</span>
+            </p>
+
+            <ul class="horarios">
+              <li v-for="f in obra.funciones" :key="f.fecha + f.hora" class="horario">
+                <span class="horario__fecha">{{ f.fecha }} · {{ f.hora }}</span>
+                <span class="horario__sala">{{ f.sala }}</span>
+              </li>
+            </ul>
+
+            <div class="obra__pie">
+              <div>
+                <p class="obra__desde">Desde</p>
+                <p class="precio">{{ obra.desde ? pesos(obra.desde) : 'Por confirmar' }}</p>
+              </div>
+              <button class="btn btn--morado" @click="comprar(obra)">
+                Comprar boletas
+              </button>
+            </div>
           </div>
-        </div>
-      </article>
+        </article>
+      </template>
     </div>
   </section>
 </template>
 
 <style scoped>
+/* Estados de carga API */
+.estado-api {
+  margin-bottom: 3.5rem;
+  padding: 1.5rem;
+  border-left: 3px solid var(--lila);
+  background: var(--blanco);
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--tinta);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.estado-api--error {
+  border-left-color: #ff6b6b;
+  color: #d63031;
+}
+
 /* ---------- FILTROS ---------- */
 .filtros {
   display: flex;
