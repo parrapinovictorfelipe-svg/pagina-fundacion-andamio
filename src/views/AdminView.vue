@@ -1,4 +1,15 @@
 <script setup>
+import { useRouter } from 'vue-router'
+import { supabase } from '@/lib/supabase'
+import AdminFunciones from '@/components/AdminFunciones.vue'
+
+const router = useRouter()
+
+async function cerrarSesion() {
+  await supabase.auth.signOut()
+  router.push('/admin/login')
+}
+
 import { ref } from 'vue'
 
 const secciones = [
@@ -75,7 +86,7 @@ function porcentaje(vendidas, aforo) {
         </button>
       </nav>
 
-      <button class="salir">Cerrar sesión →</button>
+      <button class="salir" @click="cerrarSesion">Cerrar sesión →</button>
     </aside>
 
     <!-- ============ CONTENIDO ============ -->
@@ -125,40 +136,7 @@ function porcentaje(vendidas, aforo) {
       </section>
 
       <!-- ---------- FUNCIONES ---------- -->
-      <section v-else-if="seccion === 'funciones'">
-        <h1 class="titulo-l">Funciones</h1>
-        <p class="subtitulo">Programación y aforo de la temporada</p>
-
-        <div class="tarjeta tabla-caja">
-          <table class="tabla">
-            <thead>
-              <tr>
-                <th>Obra</th>
-                <th>Fecha</th>
-                <th>Sala</th>
-                <th>Aforo</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="f in funciones" :key="f.obra + f.fecha">
-                <td class="tabla__fuerte">{{ f.obra }}</td>
-                <td class="tabla__mono">{{ f.fecha }}</td>
-                <td>{{ f.sala }}</td>
-                <td>
-                  <div class="aforo">
-                    <span class="tabla__mono">{{ f.vendidas }}/{{ f.aforo }}</span>
-                    <div class="progreso aforo__barra">
-                      <div class="progreso__relleno" :style="{ width: porcentaje(f.vendidas, f.aforo) + '%' }"></div>
-                    </div>
-                  </div>
-                </td>
-                <td><span class="badge">{{ f.estado }}</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <AdminFunciones v-else-if="seccion === 'funciones'" />
 
       <!-- ---------- INSCRIPCIONES ---------- -->
       <section v-else-if="seccion === 'inscripciones'">
