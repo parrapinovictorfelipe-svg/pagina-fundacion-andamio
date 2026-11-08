@@ -1,67 +1,27 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
-import AdminFunciones from '@/components/AdminFunciones.vue'
+import AdminDashboard from '@/components/AdminDashboard.vue'
+import AdminObras from '@/components/AdminObras.vue'
+import AdminBoleteria from '@/components/AdminBoleteria.vue'
+import AdminSitio from '@/components/AdminSitio.vue'
 
+const secciones = [
+  { id: 'dashboard',     nombre: 'Dashboard' },
+  { id: 'obras',         nombre: 'Obras' },
+  { id: 'boleteria',     nombre: 'Boletería' },
+  { id: 'inscripciones', nombre: 'Inscripciones' },
+  { id: 'donaciones',    nombre: 'Donaciones' },
+  { id: 'sitio',         nombre: 'Sitio web' },
+]
+
+const seccion = ref('dashboard')
 const router = useRouter()
 
 async function cerrarSesion() {
   await supabase.auth.signOut()
   router.push('/admin/login')
-}
-
-import { ref } from 'vue'
-
-const secciones = [
-  { id: 'dashboard',    nombre: 'Dashboard' },
-  { id: 'funciones',    nombre: 'Funciones' },
-  { id: 'inscripciones', nombre: 'Inscripciones' },
-  { id: 'donaciones',   nombre: 'Donaciones' },
-  { id: 'boleteria',    nombre: 'Boletería' },
-]
-
-const seccion = ref('dashboard')
-
-const metricas = [
-  { titulo: 'Donaciones (mes)',    valor: '$1.925.000', cambio: '+12% vs mes anterior', tono: 'sube' },
-  { titulo: 'Boletas vendidas',    valor: '247',        cambio: '+8% vs mes anterior',  tono: 'sube' },
-  { titulo: 'Inscripciones activas', valor: '41',       cambio: '-3% vs mes anterior',  tono: 'baja' },
-  { titulo: 'Funciones programadas', valor: '11',       cambio: '= vs mes anterior',    tono: 'igual' },
-]
-
-const inscripciones = [
-  { nombre: 'Laura Jiménez', programa: 'Escuela de Teatro',   fecha: '18 sep', estado: 'pendiente' },
-  { nombre: 'Carlos Medina', programa: 'Taller Adultos',      fecha: '17 sep', estado: 'aprobado' },
-  { nombre: 'Sofía Roa',     programa: 'Teatro Comunitario',  fecha: '16 sep', estado: 'aprobado' },
-  { nombre: 'Miguel Torres', programa: 'Teatro Infantil',     fecha: '15 sep', estado: 'pendiente' },
-  { nombre: 'Daniela Cruz',  programa: 'Escuela de Teatro',   fecha: '14 sep', estado: 'aprobado' },
-]
-
-const donaciones = [
-  { donante: 'Anónimo',        tipo: 'única',   medio: 'Tarjeta', monto: '$100.000', fecha: '18 sep' },
-  { donante: 'Patricia Gómez', tipo: 'mensual', medio: 'PSE',     monto: '$250.000', fecha: '17 sep' },
-  { donante: 'Ricardo Mora',   tipo: 'única',   medio: 'Tarjeta', monto: '$50.000',  fecha: '17 sep' },
-  { donante: 'Anónimo',        tipo: 'única',   medio: 'PSE',     monto: '$25.000',  fecha: '16 sep' },
-  { donante: 'Elena Parra',    tipo: 'mensual', medio: 'Tarjeta', monto: '$75.000',  fecha: '15 sep' },
-]
-
-const funciones = [
-  { obra: 'Esperando a Godot',           fecha: 'Sáb 12 Oct · 7:00 PM', sala: 'Teatro Principal', vendidas: 86,  aforo: 120, estado: 'En venta' },
-  { obra: 'Esperando a Godot',           fecha: 'Dom 13 Oct · 5:00 PM', sala: 'Teatro Principal', vendidas: 31,  aforo: 120, estado: 'En venta' },
-  { obra: 'La Casa de Bernarda Alba',    fecha: 'Vie 18 Oct · 8:00 PM', sala: 'Sala Negra',       vendidas: 42,  aforo: 60,  estado: 'En venta' },
-  { obra: 'La Casa de Bernarda Alba',    fecha: 'Sáb 19 Oct · 6:00 PM', sala: 'Sala Negra',       vendidas: 53,  aforo: 60,  estado: 'Casi lleno' },
-  { obra: 'El Círculo de Tiza Caucasiano', fecha: 'Dom 3 Nov · 5:00 PM', sala: 'Teatro Principal', vendidas: 25, aforo: 120, estado: 'En venta' },
-]
-
-const boletas = [
-  { codigo: 'AND-4821', comprador: 'Victor Parra',   obra: 'Esperando a Godot',        tipo: 'General × 2',    monto: '$73.500', estado: 'aprobado' },
-  { codigo: 'AND-4820', comprador: 'Marta Silva',    obra: 'La Casa de Bernarda Alba', tipo: 'Estudiante × 1', monto: '$21.500', estado: 'aprobado' },
-  { codigo: 'AND-4819', comprador: 'Juan Betancur',  obra: 'Esperando a Godot',        tipo: 'VIP × 2',        monto: '$133.500', estado: 'pendiente' },
-  { codigo: 'AND-4818', comprador: 'Lina Cardona',   obra: 'Yerma',                    tipo: 'General × 3',    monto: '$108.500', estado: 'aprobado' },
-]
-
-function porcentaje(vendidas, aforo) {
-  return Math.round((vendidas / aforo) * 100)
 }
 </script>
 
@@ -91,144 +51,27 @@ function porcentaje(vendidas, aforo) {
 
     <!-- ============ CONTENIDO ============ -->
     <main class="contenido">
-      <!-- ---------- DASHBOARD ---------- -->
-      <section v-if="seccion === 'dashboard'">
-        <h1 class="titulo-l">Dashboard</h1>
-        <p class="subtitulo">Resumen de actividad — septiembre 2026</p>
+      <AdminDashboard v-if="seccion === 'dashboard'" @ir="seccion = $event" />
+      <AdminObras v-else-if="seccion === 'obras'" />
+      <AdminBoleteria v-else-if="seccion === 'boleteria'" />
 
-        <div class="metricas">
-          <div v-for="m in metricas" :key="m.titulo" class="tarjeta metrica">
-            <p class="metrica__titulo">{{ m.titulo }}</p>
-            <p class="metrica__valor">{{ m.valor }}</p>
-            <p class="metrica__cambio" :class="'metrica__cambio--' + m.tono">
-              {{ m.cambio }}
-            </p>
-          </div>
-        </div>
-
-        <div class="dos-columnas">
-          <div class="tarjeta">
-            <p class="etiqueta">Últimas inscripciones</p>
-            <ul class="lista">
-              <li v-for="i in inscripciones.slice(0, 4)" :key="i.nombre" class="lista__fila">
-                <div>
-                  <p class="lista__principal">{{ i.nombre }}</p>
-                  <p class="lista__secundario">{{ i.programa }}</p>
-                </div>
-                <span class="badge" :class="'badge--' + i.estado">{{ i.estado }}</span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="tarjeta">
-            <p class="etiqueta">Últimas donaciones</p>
-            <ul class="lista">
-              <li v-for="d in donaciones.slice(0, 4)" :key="d.donante + d.fecha" class="lista__fila">
-                <div>
-                  <p class="lista__principal">{{ d.donante }}</p>
-                  <p class="lista__secundario">{{ d.tipo }} · {{ d.medio }}</p>
-                </div>
-                <span class="lista__monto">{{ d.monto }}</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---------- FUNCIONES ---------- -->
-      <AdminFunciones v-else-if="seccion === 'funciones'" />
-
-      <!-- ---------- INSCRIPCIONES ---------- -->
       <section v-else-if="seccion === 'inscripciones'">
         <h1 class="titulo-l">Inscripciones</h1>
-        <p class="subtitulo">Solicitudes recibidas por programa</p>
-
-        <div class="tarjeta tabla-caja">
-          <table class="tabla">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Programa</th>
-                <th>Fecha</th>
-                <th>Estado</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="i in inscripciones" :key="i.nombre">
-                <td class="tabla__fuerte">{{ i.nombre }}</td>
-                <td>{{ i.programa }}</td>
-                <td class="tabla__mono">{{ i.fecha }}</td>
-                <td><span class="badge" :class="'badge--' + i.estado">{{ i.estado }}</span></td>
-                <td class="tabla__acciones">
-                  <button class="accion">Ver</button>
-                  <button class="accion accion--principal">Aprobar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p class="subtitulo">Talleres y solicitudes recibidas</p>
+        <p style="color: var(--gris)">
+          Esta sección se conecta en el siguiente paso, junto con la página Inscripción.
+        </p>
       </section>
 
-      <!-- ---------- DONACIONES ---------- -->
       <section v-else-if="seccion === 'donaciones'">
         <h1 class="titulo-l">Donaciones</h1>
-        <p class="subtitulo">Aportes recibidos este mes</p>
-
-        <div class="tarjeta tabla-caja">
-          <table class="tabla">
-            <thead>
-              <tr>
-                <th>Donante</th>
-                <th>Tipo</th>
-                <th>Medio</th>
-                <th>Fecha</th>
-                <th class="tabla__derecha">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="d in donaciones" :key="d.donante + d.fecha">
-                <td class="tabla__fuerte">{{ d.donante }}</td>
-                <td>{{ d.tipo }}</td>
-                <td>{{ d.medio }}</td>
-                <td class="tabla__mono">{{ d.fecha }}</td>
-                <td class="tabla__derecha tabla__monto">{{ d.monto }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p class="subtitulo">Aportes recibidos</p>
+        <p style="color: var(--gris)">
+          Esta sección se conecta en el siguiente paso, junto con la página Donaciones.
+        </p>
       </section>
 
-      <!-- ---------- BOLETERÍA ---------- -->
-      <section v-else>
-        <h1 class="titulo-l">Boletería</h1>
-        <p class="subtitulo">Compras registradas en línea</p>
-
-        <div class="tarjeta tabla-caja">
-          <table class="tabla">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Comprador</th>
-                <th>Obra</th>
-                <th>Boletas</th>
-                <th>Estado</th>
-                <th class="tabla__derecha">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="b in boletas" :key="b.codigo">
-                <td class="tabla__mono tabla__fuerte">{{ b.codigo }}</td>
-                <td>{{ b.comprador }}</td>
-                <td>{{ b.obra }}</td>
-                <td>{{ b.tipo }}</td>
-                <td><span class="badge" :class="'badge--' + b.estado">{{ b.estado }}</span></td>
-                <td class="tabla__derecha tabla__monto">{{ b.monto }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <AdminSitio v-else />
     </main>
   </div>
 </template>

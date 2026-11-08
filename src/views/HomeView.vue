@@ -1,42 +1,36 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import galeria from '@/assets/galeria.js'
 import Carousel from '@/components/Carousel.vue'
+import { supabase } from '@/lib/supabase'
+import { useContenido } from '@/lib/contenido'
 
-const fotoHero = galeria[15].src   
-const fotoSobre = galeria[4].src   
+const { t, listo } = useContenido()
 
-// Estados para el consumo de la API
-const proximas = ref([])
-const cargando = ref(true)
-const error = ref(false)
+// Si no hay foto en el panel, se usa la original del sitio
+const fotoHero = computed(() => t('home.hero.foto') || galeria[15].src)
+const fotoSobre = computed(() => t('home.sobre.foto') || galeria[4].src)
 
-const cargarFunciones = async () => {
-  try {
-    const respuesta = await fetch('https://6ac199f9309c92da039c6a30.mockapi.io/funciones')
-    if (!respuesta.ok) throw new Error('Error en la petición')
-    
-    const datos = await respuesta.json()
-    proximas.value = datos
-  } catch (err) {
-    error.value = true
-  } finally {
-    cargando.value = false
-  }
-}
+const cifras = computed(() =>
+  [1, 2, 3, 4]
+    .map((n) => ({
+      valor: t(`home.cifras.${n}.valor`),
+      etiqueta: t(`home.cifras.${n}.etiqueta`),
+    }))
+    .filter((c) => c.valor || c.etiqueta)
+)
 
-onMounted(() => {
-  cargarFunciones()
-})
+const montos = computed(() =>
+  [1, 2, 3, 4]
+    .map((n) => ({
+      valor: t(`home.donacion.monto${n}.valor`),
+      impacto: t(`home.donacion.monto${n}.impacto`),
+    }))
+    .filter((m) => m.valor || m.impacto)
+)
 
-const cifras = [
-  { valor: '16+',   etiqueta: 'Años de trayectoria' },
-  { valor: '4.200', etiqueta: 'Beneficiarios directos' },
-  { valor: '87',    etiqueta: 'Producciones realizadas' },
-  { valor: '12',    etiqueta: 'Municipios alcanzados' },
-]
-
+// Los programas se conectan al panel en la Parte 3
 const programas = [
   {
     num: '01',
@@ -58,48 +52,87 @@ const programas = [
   },
 ]
 
-const montos = [
-  { valor: '$10.000',  impacto: 'Una sesión de ensayo' },
-  { valor: '$50.000',  impacto: 'Un taller comunitario' },
-  { valor: '$100.000', impacto: 'Beca para un talento' },
-  { valor: '$250.000', impacto: 'Una producción completa' },
-]
+// Próximas funciones
+const proximas = ref([])
+const cargando = ref(true)
+const error = ref(false)
+
+const formatoFecha = (iso) =>
+  new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+
+const cargarFunciones = async () => {
+  try {
+    const { data, error: errFunciones } = await supabase
+      .from('funciones')
+      .select('id, fecha, sala, obras(titulo)')
+      .gte('fecha', new Date().toISOString())
+      .order('fecha', { ascending: true })
+      .limit(3)
+    if (errFunciones) throw errFunciones
+    proximas.value = data
+  } catch (err) {
+    error.value = true
+  } finally {
+    cargando.value = false
+  }
+}
+
+// Fotos del carrusel
+const fotosGaleria = ref([])
+
+const cargarFotos = async () => {
+  try {
+    const { data, error: errFotos } = await supabase
+      .from('fotos_carrusel')
+      .select('imagen_url, descripcion')
+      .order('orden', { ascending: true })
+      .order('id', { ascending: true })
+    if (errFotos) throw errFotos
+    fotosGaleria.value =
+      data.length > 0
+        ? data.map((f) => ({ src: f.imagen_url, alt: f.descripcion || 'Foto de la galería' }))
+        : galeria
+  } catch (err) {
+    fotosGaleria.value = galeria
+  }
+}
+
+onMounted(() => {
+  cargarFunciones()
+  cargarFotos()
+})
 </script>
 
-<template>
-  <!-- ============ HERO PARTIDO 50/50 ============ -->
+<template v-if="listo">
+  <!-- ============ PORTADA ============ -->
   <section class="hero">
     <div class="hero__texto">
-      <p class="etiqueta">Bogotá · Desde 2008</p>
+      <p class="etiqueta">{{ t('home.hero.etiqueta') }}</p>
 
       <h1 class="titulo-xl hero__titulo">
-        El arte<br />
-        <span class="hero__acento">trans</span>forma
+        {{ t('home.hero.linea1') }}<br />
+        <span class="hero__acento">{{ t('home.hero.acento') }}</span>{{ t('home.hero.resto') }}
       </h1>
 
-      <p class="parrafo parrafo--oscuro hero__bajada">
-        Fundación cultural dedicada al teatro, las artes escénicas y la
-        transformación de comunidades en Colombia.
-      </p>
+      <p class="parrafo parrafo--oscuro hero__bajada">{{ t('home.hero.bajada') }}</p>
 
       <div class="hero__acciones">
-        <RouterLink to="/funciones" class="btn btn--solido">Ver funciones</RouterLink>
-        <RouterLink to="/donaciones" class="btn btn--contorno">Apoyar</RouterLink>
+        <RouterLink to="/funciones" class="btn btn--solido">{{ t('home.hero.boton1') }}</RouterLink>
+        <RouterLink to="/donaciones" class="btn btn--contorno">{{ t('home.hero.boton2') }}</RouterLink>
       </div>
 
-      <!-- Renderizado condicional de la API -->
       <div v-if="cargando" class="estado-api">
         <p>⏳ Cargando próximas funciones...</p>
       </div>
-      
+
       <div v-else-if="error" class="estado-api estado-api--error">
         <p>❌ Error al cargar las funciones. Intenta de nuevo más tarde.</p>
       </div>
 
       <ul v-else-if="proximas.length > 0" class="proximas">
         <li v-for="f in proximas" :key="f.id" class="proximas__item">
-          <span class="proximas__fecha">{{ f.fecha }}</span>
-          <span class="proximas__obra">{{ f.obra }}</span>
+          <span class="proximas__fecha">{{ formatoFecha(f.fecha) }}</span>
+          <span class="proximas__obra">{{ f.obras?.titulo }}</span>
           <span class="proximas__sala">{{ f.sala }}</span>
         </li>
       </ul>
@@ -111,7 +144,7 @@ const montos = [
 
     <div class="hero__marco">
       <img :src="fotoHero" alt="Elenco de Fundación Andamio en escena" class="hero__foto" />
-      <span class="hero__credito">Fundación Andamio</span>
+      <span class="hero__credito">{{ t('home.hero.credito') }}</span>
     </div>
   </section>
 
@@ -132,17 +165,11 @@ const montos = [
 
       <div>
         <h2 class="titulo-l sobre__titulo">
-          Un andamio<br />para la <span class="sobre__acento">cultura</span>
+          {{ t('home.sobre.linea1') }}<br />{{ t('home.sobre.linea2') }}
+          <span class="sobre__acento">{{ t('home.sobre.acento') }}</span>
         </h2>
-        <p class="parrafo">
-          Nacemos de la convicción de que el teatro es un andamio: una estructura
-          temporal y firme sobre la que se construye algo permanente. Trabajamos
-          con jóvenes, comunidades vulnerables y artistas emergentes para que el
-          arte escénico sea una herramienta de transformación real.
-        </p>
-        <RouterLink to="/inscripcion" class="enlace-acento">
-          Únete a un programa →
-        </RouterLink>
+        <p class="parrafo">{{ t('home.sobre.parrafo') }}</p>
+        <RouterLink to="/inscripcion" class="enlace-acento">{{ t('home.sobre.enlace') }}</RouterLink>
       </div>
     </div>
   </section>
@@ -152,12 +179,10 @@ const montos = [
     <div class="contenedor">
       <div class="programas__cabecera">
         <div>
-          <p class="etiqueta">Lo que hacemos</p>
-          <h2 class="titulo-l">Programas</h2>
+          <p class="etiqueta">{{ t('home.programas.etiqueta') }}</p>
+          <h2 class="titulo-l">{{ t('home.programas.titulo') }}</h2>
         </div>
-        <RouterLink to="/inscripcion" class="enlace-acento">
-          Ver inscripciones →
-        </RouterLink>
+        <RouterLink to="/inscripcion" class="enlace-acento">{{ t('home.programas.enlace') }}</RouterLink>
       </div>
 
       <div class="programas__grid">
@@ -174,9 +199,9 @@ const montos = [
   <!-- ============ GALERÍA ============ -->
   <section class="seccion seccion--clara">
     <div class="contenedor">
-      <p class="etiqueta">Momentos en escena</p>
-      <h2 class="titulo-l galeria__titulo">Galería</h2>
-      <Carousel :fotos="galeria" />
+      <p class="etiqueta">{{ t('home.galeria.etiqueta') }}</p>
+      <h2 class="titulo-l galeria__titulo">{{ t('home.galeria.titulo') }}</h2>
+      <Carousel v-if="fotosGaleria.length" :fotos="fotosGaleria" />
     </div>
   </section>
 
@@ -184,17 +209,14 @@ const montos = [
   <section class="seccion donacion">
     <div class="contenedor donacion__grid">
       <div>
-        <p class="etiqueta">Apoya el arte</p>
-        <h2 class="titulo-l">Tu donación<br />mueve el telón</h2>
-        <p class="parrafo parrafo--oscuro donacion__texto">
-          Cada peso llega directamente a los programas y artistas de
-          Fundación Andamio.
-        </p>
-        <RouterLink to="/donaciones" class="btn btn--solido">Donar ahora</RouterLink>
+        <p class="etiqueta">{{ t('home.donacion.etiqueta') }}</p>
+        <h2 class="titulo-l">{{ t('home.donacion.linea1') }}<br />{{ t('home.donacion.linea2') }}</h2>
+        <p class="parrafo parrafo--oscuro donacion__texto">{{ t('home.donacion.texto') }}</p>
+        <RouterLink to="/donaciones" class="btn btn--solido">{{ t('home.donacion.boton') }}</RouterLink>
       </div>
 
       <div class="montos">
-        <div v-for="m in montos" :key="m.valor" class="monto">
+        <div v-for="m in montos" :key="m.valor + m.impacto" class="monto">
           <p class="monto__valor">{{ m.valor }}</p>
           <p class="monto__impacto">{{ m.impacto }}</p>
         </div>

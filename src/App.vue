@@ -1,23 +1,47 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
-import logo from '@/assets/logo-andamio.jpg'
+import logoLocal from '@/assets/logo-andamio.jpg'
+import { useContenido } from '@/lib/contenido'
+
+const { t, listo } = useContenido()
+
+// Si no hay logo en el panel, se usa el original
+const logo = computed(() => t('nav.logo') || logoLocal)
+
+const enlaces = computed(() => [
+  { ruta: '/', texto: t('nav.inicio') },
+  { ruta: '/funciones', texto: t('nav.funciones') },
+  { ruta: '/boleteria', texto: t('nav.boleteria') },
+  { ruta: '/inscripcion', texto: t('nav.inscripcion') },
+  { ruta: '/donaciones', texto: t('nav.donaciones') },
+])
+
+// Las redes sin dirección no se muestran
+const redes = computed(() =>
+  [
+    { url: t('pie.instagram'), sigla: 'IG', nombre: 'Instagram' },
+    { url: t('pie.facebook'), sigla: 'FB', nombre: 'Facebook' },
+    { url: t('pie.youtube'), sigla: 'YT', nombre: 'YouTube' },
+    { url: t('pie.twitter'), sigla: 'TW', nombre: 'X / Twitter' },
+  ].filter((r) => r.url)
+)
+
+const contacto = computed(() =>
+  [t('pie.direccion'), t('pie.telefono'), t('pie.correo')].filter(Boolean)
+)
 </script>
 
 <template>
   <header class="barra">
     <div class="barra__interior">
       <RouterLink to="/" class="marca">
-        <img :src="logo" alt="Fundación Andamio" class="marca__logo" />
-        <span class="marca__nombre">Fundación Andamio</span>
+        <img :src="logo" :alt="t('nav.nombre')" class="marca__logo" />
+        <span class="marca__nombre">{{ t('nav.nombre') }}</span>
       </RouterLink>
 
-      <nav class="nav">
-        <RouterLink to="/">Inicio</RouterLink>
-        <RouterLink to="/funciones">Funciones</RouterLink>
-        <RouterLink to="/boleteria">Boletería</RouterLink>
-        <RouterLink to="/inscripcion">Inscripción</RouterLink>
-        <RouterLink to="/donaciones">Donaciones</RouterLink>
-        <!-- <RouterLink to="/admin" class="nav__admin">Admin</RouterLink> -->
+      <nav v-if="listo" class="nav">
+        <RouterLink v-for="e in enlaces" :key="e.ruta" :to="e.ruta">{{ e.texto }}</RouterLink>
       </nav>
     </div>
   </header>
@@ -26,52 +50,48 @@ import logo from '@/assets/logo-andamio.jpg'
     <RouterView />
   </main>
 
-  <footer class="pie">
+  <footer v-if="listo" class="pie">
     <div class="contenedor pie__grid">
       <div>
         <div class="marca marca--pie">
-          <img :src="logo" alt="Fundación Andamio" class="marca__logo" />
-          <span class="marca__nombre">Fundación Andamio</span>
+          <img :src="logo" :alt="t('nav.nombre')" class="marca__logo" />
+          <span class="marca__nombre">{{ t('nav.nombre') }}</span>
         </div>
-        <p class="pie__texto">
-          Una fundación dedicada al teatro, las artes escénicas y la
-          transformación cultural en Colombia desde 2008.
-        </p>
-        <p class="pie__nit">
-          NIT: 900.234.567-8<br />
-          Entidad sin ánimo de lucro
+        <p v-if="t('pie.descripcion')" class="pie__texto">{{ t('pie.descripcion') }}</p>
+        <p v-if="t('pie.nit') || t('pie.entidad')" class="pie__nit">
+          {{ t('pie.nit') }}<br v-if="t('pie.nit') && t('pie.entidad')" />{{ t('pie.entidad') }}
         </p>
       </div>
 
       <div>
-        <p class="etiqueta">Navegación</p>
+        <p class="etiqueta">{{ t('pie.nav.titulo') }}</p>
         <ul class="pie__lista">
-          <li><RouterLink to="/funciones">Funciones</RouterLink></li>
-          <li><RouterLink to="/boleteria">Boletería</RouterLink></li>
-          <li><RouterLink to="/inscripcion">Inscripción</RouterLink></li>
-          <li><RouterLink to="/donaciones">Donaciones</RouterLink></li>
+          <li v-for="e in enlaces.slice(1)" :key="e.ruta">
+            <RouterLink :to="e.ruta">{{ e.texto }}</RouterLink>
+          </li>
         </ul>
       </div>
 
       <div>
-        <p class="etiqueta">Contacto</p>
+        <p class="etiqueta">{{ t('pie.contacto.titulo') }}</p>
         <ul class="pie__lista">
-          <li>Calle 45 #12-34, Bogotá</li>
-          <li>(+57) 1 234 5678</li>
-          <li>contacto@andamio.org.co</li>
+          <li v-for="c in contacto" :key="c">{{ c }}</li>
         </ul>
-        <div class="pie__redes">
-          <a href="#" aria-label="Instagram">IG</a>
-          <a href="#" aria-label="Facebook">FB</a>
-          <a href="#" aria-label="YouTube">YT</a>
-          <a href="#" aria-label="Twitter">TW</a>
+        <div v-if="redes.length" class="pie__redes">
+          <a
+            v-for="r in redes"
+            :key="r.sigla"
+            :href="r.url"
+            :aria-label="r.nombre"
+            target="_blank"
+            rel="noopener"
+          >{{ r.sigla }}</a>
         </div>
       </div>
     </div>
 
     <div class="contenedor pie__legal">
-      <span>© 2026 Fundación Andamio — Todos los derechos reservados</span>
-      <!-- <RouterLink to="/admin">Administración →</RouterLink> -->
+      <span>{{ t('pie.copyright') }}</span>
     </div>
   </footer>
 </template>
