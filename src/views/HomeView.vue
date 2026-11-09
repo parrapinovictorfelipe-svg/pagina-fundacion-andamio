@@ -30,27 +30,24 @@ const montos = computed(() =>
     .filter((m) => m.valor || m.impacto)
 )
 
-// Los programas se conectan al panel en la Parte 3
-const programas = [
-  {
-    num: '01',
-    tipo: 'Formación',
-    titulo: 'Escuela de Teatro',
-    texto: 'Formación integral en artes escénicas para niños, jóvenes y adultos. Actuación, dirección y dramaturgia.',
-  },
-  {
-    num: '02',
-    tipo: 'Comunidad',
-    titulo: 'Teatro Comunitario',
-    texto: 'Proyectos teatrales en comunidades vulnerables que usan la escena como herramienta de resolución de conflictos.',
-  },
-  {
-    num: '03',
-    tipo: 'Festival',
-    titulo: 'Festival Andamio',
-    texto: 'Festival anual que reúne compañías nacionales e internacionales en un intercambio artístico abierto.',
-  },
-]
+// Programas del Inicio (vienen de Inscripciones → Talleres y programas)
+const programas = ref([])
+
+const cargarProgramas = async () => {
+  const { data } = await supabase
+    .from('talleres')
+    .select('id, nombre, tipo, descripcion')
+    .eq('activo', true)
+    .eq('mostrar_en_inicio', true)
+    .order('orden', { ascending: true })
+  programas.value = (data || []).map((p, i) => ({
+    id: p.id,
+    num: String(i + 1).padStart(2, '0'),
+    tipo: p.tipo,
+    titulo: p.nombre,
+    texto: p.descripcion,
+  }))
+}
 
 // Próximas funciones
 const proximas = ref([])
@@ -100,6 +97,7 @@ const cargarFotos = async () => {
 onMounted(() => {
   cargarFunciones()
   cargarFotos()
+  cargarProgramas()
 })
 </script>
 
@@ -188,7 +186,7 @@ onMounted(() => {
       <div class="programas__grid">
         <article v-for="p in programas" :key="p.num" class="programa">
           <p class="programa__num">{{ p.num }}</p>
-          <span class="programa__tipo">{{ p.tipo }}</span>
+          <span v-if="p.tipo" class="programa__tipo">{{ p.tipo }}</span>
           <h3 class="titulo-m programa__titulo">{{ p.titulo }}</h3>
           <p class="parrafo parrafo--oscuro programa__texto">{{ p.texto }}</p>
         </article>

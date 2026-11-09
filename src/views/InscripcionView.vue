@@ -1,57 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { supabase } from '@/lib/supabase'
 
-const programas = [
-  {
-    id: 'escuela',
-    nombre: 'Escuela de Teatro',
-    descripcion: 'Formación actoral para jóvenes de 14 a 25 años. Módulos de actuación, voz, movimiento y dramaturgia.',
-    periodo: 'Feb – Nov 2026',
-    horario: 'Sáb 9:00 AM – 1:00 PM',
-    costo: 'Gratuito (selección por audición)',
-    gratuito: true,
-    ocupados: 17,
-    cupos: 24,
-  },
-  {
-    id: 'adultos',
-    nombre: 'Taller de Teatro para Adultos',
-    descripcion: 'Espacio de exploración escénica para adultos de 26 años en adelante. Sin experiencia previa necesaria.',
-    periodo: 'Oct – Dic 2026',
-    horario: 'Mar y Jue 6:30 PM – 9:00 PM',
-    costo: '$120.000 / mes',
-    gratuito: false,
-    ocupados: 7,
-    cupos: 18,
-  },
-  {
-    id: 'comunitario',
-    nombre: 'Teatro Comunitario',
-    descripcion: 'Proyecto de teatro aplicado en comunidades. Requiere disponibilidad para trabajo de campo en barrios.',
-    periodo: 'Nov 2026 – Abr 2027',
-    horario: 'Flexible según comunidad',
-    costo: 'Gratuito',
-    gratuito: true,
-    ocupados: 8,
-    cupos: 12,
-  },
-  {
-    id: 'infantil',
-    nombre: 'Teatro Infantil y Juvenil',
-    descripcion: 'Para niñas y niños de 7 a 13 años. Juego teatral, títeres, expresión corporal y montaje final.',
-    periodo: 'Oct – Dic 2026',
-    horario: 'Sáb 10:00 AM – 12:00 PM',
-    costo: '$80.000 / mes',
-    gratuito: false,
-    ocupados: 7,
-    cupos: 20,
-  },
-]
+const programas = ref([])
+const ocupados = ref({})
+const cargando = ref(true)
+const errorCarga = ref('')
 
 const niveles = ['Ninguna', 'Menos de 1 año', 'Entre 1 y 3 años', 'Más de 3 años', 'Formación profesional']
 
 const programaId = ref(null)
 const enviado = ref(false)
+const enviando = ref(false)
+const errorEnvio = ref('')
 
 const form = ref({
   nombre: '',
@@ -59,12 +20,14 @@ const form = ref({
   telefono: '',
   documento: '',
   edad: '',
+  acudiente: '',
   experiencia: 'Ninguna',
   motivacion: '',
   autoriza: false,
 })
 
-const programa = computed(() => programas.find((p) => p.id === programaId.value) || null)
+const programa = computed(() => programas.value.find((p) => p.id === programaId.value) || null)
+const esMenor = computed(() => Number(form.value.edad) > 0 && Number(form.value.edad) < 18)
 
 const formCompleto = computed(
   () =>
@@ -73,25 +36,86 @@ const formCompleto = computed(
     form.value.telefono &&
     form.value.documento &&
     form.value.edad &&
-    form.value.autoriza
+    form.value.autoriza &&
+    (!esMenor.value || form.value.acudiente)
 )
 
-function disponibles(p) {
-  return p.cupos - p.ocupados
+function ocupadosDe(p) {
+  return ocupados.value[p.id] || 0
+}
+function lleno(p) {
+  return p.cupos > 0 && ocupadosDe(p) >= p.cupos
+}
+function quedan(p) {
+  return p.cupos > 0 ? Math.max(0, p.cupos - ocupadosDe(p)) : null
+}
+const esGratuito = (p) => /gratu|libre/i.test(p.costo || '')
+
+async function cargarOcupados() {
+  const { data } = await supabase.rpc('cupos_talleres')
+  const mapa = {}
+  for (const c of data || []) mapa[c.taller_id] = Number(c.ocupados)
+  ocupados.value = mapa
 }
 
-function enviar() {
-  enviado.value = true
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+async function cargar() {
+  try {
+    const { data, error } = await supabase
+      .from('talleres')
+      .select('*')
+      .eq('activo', true)
+      .eq('inscripcion_abierta', true)
+      .order('orden', { ascending: true })
+      .order('id', { ascending: true })
+    if (error) throw error
+    programas.value = data
+    await cargarOcupados()
+  } catch (e) {
+    console.error(e)
+    errorCarga.value = 'No pudimos cargar los programas. Intenta de nuevo en un momento.'
+  } finally {
+    cargando.value = false
+  }
 }
 
-function reiniciar() {
+onMounted(cargar)
+
+async function enviar() {
+  errorEnvio.value = ''
+  enviando.value = true
+  try {
+    const { error } = await supabase.rpc('crear_inscripcion', {
+      p_taller_id: programaId.value,
+      p_nombre: form.value.nombre,
+      p_correo: form.value.correo,
+      p_telefono: form.value.telefono,
+      p_documento: form.value.documento,
+      p_edad: Number(form.value.edad),
+      p_acudiente: esMenor.value ? form.value.acudiente : '',
+      p_experiencia: form.value.experiencia,
+      p_motivacion: form.value.motivacion,
+      p_autoriza: form.value.autoriza,
+    })
+    if (error) throw error
+    enviado.value = true
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } catch (e) {
+    errorEnvio.value = e.message || 'No se pudo registrar la inscripción. Intenta de nuevo.'
+    await cargarOcupados()
+  } finally {
+    enviando.value = false
+  }
+}
+
+async function reiniciar() {
   enviado.value = false
   programaId.value = null
+  errorEnvio.value = ''
   form.value = {
-    nombre: '', correo: '', telefono: '', documento: '',
-    edad: '', experiencia: 'Ninguna', motivacion: '', autoriza: false,
+    nombre: '', correo: '', telefono: '', documento: '', edad: '',
+    acudiente: '', experiencia: 'Ninguna', motivacion: '', autoriza: false,
   }
+  await cargarOcupados()
 }
 </script>
 
@@ -109,8 +133,14 @@ function reiniciar() {
 
   <section class="seccion seccion--clara">
     <div class="contenedor">
+      <p v-if="cargando" class="aviso">Cargando programas...</p>
+      <p v-else-if="errorCarga" class="aviso">{{ errorCarga }}</p>
+      <p v-else-if="programas.length === 0 && !enviado" class="aviso">
+        Por ahora no hay inscripciones abiertas. Vuelve pronto.
+      </p>
+
       <!-- ============ CONFIRMACIÓN ============ -->
-      <div v-if="enviado" class="confirmacion tarjeta">
+      <div v-else-if="enviado" class="confirmacion tarjeta">
         <p class="etiqueta etiqueta--claro">Inscripción recibida</p>
         <h2 class="titulo-m">Gracias, {{ form.nombre.split(' ')[0] }}</h2>
         <p class="parrafo">
@@ -131,32 +161,36 @@ function reiniciar() {
             :key="p.id"
             class="seleccionable programa"
             :class="{ activa: programaId === p.id }"
+            :disabled="lleno(p)"
             @click="programaId = p.id"
           >
             <div class="programa__cabecera">
               <h3 class="titulo-s">{{ p.nombre }}</h3>
-              <span v-if="disponibles(p) <= 5" class="badge">
-                {{ disponibles(p) }} cupos
+              <span v-if="lleno(p)" class="badge">Sin cupos</span>
+              <span v-else-if="quedan(p) !== null && quedan(p) <= 5" class="badge">
+                {{ quedan(p) }} cupos
               </span>
             </div>
 
-            <p class="programa__desc">{{ p.descripcion }}</p>
+            <p v-if="p.descripcion" class="programa__desc">{{ p.descripcion }}</p>
 
             <ul class="programa__datos">
-              <li>{{ p.periodo }}</li>
-              <li>{{ p.horario }}</li>
-              <li :class="p.gratuito ? 'programa__gratis' : 'programa__costo'">
+              <li v-if="p.periodo">{{ p.periodo }}</li>
+              <li v-if="p.horario">{{ p.horario }}</li>
+              <li v-if="p.costo" :class="esGratuito(p) ? 'programa__gratis' : 'programa__costo'">
                 {{ p.costo }}
               </li>
             </ul>
 
-            <div class="progreso programa__progreso">
-              <div
-                class="progreso__relleno"
-                :style="{ width: (p.ocupados / p.cupos) * 100 + '%' }"
-              ></div>
-            </div>
-            <p class="programa__cupos">{{ p.ocupados }} de {{ p.cupos }} cupos ocupados</p>
+            <template v-if="p.cupos > 0">
+              <div class="progreso programa__progreso">
+                <div
+                  class="progreso__relleno"
+                  :style="{ width: Math.min(100, (ocupadosDe(p) / p.cupos) * 100) + '%' }"
+                ></div>
+              </div>
+              <p class="programa__cupos">{{ ocupadosDe(p) }} de {{ p.cupos }} cupos ocupados</p>
+            </template>
           </button>
         </div>
 
@@ -166,12 +200,12 @@ function reiniciar() {
 
           <div class="campo">
             <label class="campo__label" for="i-nombre">Nombre completo</label>
-            <input id="i-nombre" v-model="form.nombre" class="campo__input" type="text" placeholder="Ana Rodríguez" />
+            <input id="i-nombre" v-model="form.nombre" class="campo__input" type="text" placeholder="Nombre y apellido" />
           </div>
 
           <div class="campo">
             <label class="campo__label" for="i-correo">Correo electrónico</label>
-            <input id="i-correo" v-model="form.correo" class="campo__input" type="email" placeholder="ana@correo.com" />
+            <input id="i-correo" v-model="form.correo" class="campo__input" type="email" placeholder="tucorreo@email.com" />
           </div>
 
           <div class="campo">
@@ -186,8 +220,13 @@ function reiniciar() {
             </div>
             <div class="campo">
               <label class="campo__label" for="i-edad">Edad</label>
-              <input id="i-edad" v-model="form.edad" class="campo__input" type="number" min="5" max="99" placeholder="22" />
+              <input id="i-edad" v-model="form.edad" class="campo__input" type="number" min="3" max="99" placeholder="22" />
             </div>
+          </div>
+
+          <div v-if="esMenor" class="campo">
+            <label class="campo__label" for="i-acu">Nombre del acudiente (obligatorio para menores de edad)</label>
+            <input id="i-acu" v-model="form.acudiente" class="campo__input" type="text" placeholder="Madre, padre o adulto responsable" />
           </div>
 
           <div class="campo">
@@ -215,8 +254,10 @@ function reiniciar() {
             </span>
           </label>
 
-          <button class="btn btn--morado" :disabled="!formCompleto" @click="enviar">
-            Inscribirme al programa →
+          <p v-if="errorEnvio" class="error-envio">{{ errorEnvio }}</p>
+
+          <button class="btn btn--morado" :disabled="!formCompleto || enviando" @click="enviar">
+            {{ enviando ? 'Enviando...' : 'Inscribirme al programa →' }}
           </button>
         </div>
 
@@ -315,4 +356,8 @@ function reiniciar() {
 @media (max-width: 860px) {
   .programas { grid-template-columns: 1fr; }
 }
+</style>
+<style scoped>
+.programa:disabled { opacity: 0.55; cursor: not-allowed; }
+.error-envio { color: #b34242; font-size: 0.88rem; margin: 0 0 1rem; }
 </style>

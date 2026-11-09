@@ -42,7 +42,7 @@ async function cargar() {
         .eq('estado', 'aprobado')
         .gte('created_at', inicioMes),
       supabase.from('donaciones').select('monto').eq('estado', 'aprobado').gte('created_at', inicioMes),
-      supabase.from('inscripciones').select('*', { count: 'exact', head: true }),
+      supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase
         .from('funciones')
         .select('id, fecha, sala, aforo, obras(titulo)', { count: 'exact' })
@@ -103,9 +103,9 @@ onMounted(cargar)
           <p class="metrica__nota">aprobadas este mes</p>
         </div>
         <div class="tarjeta metrica">
-          <p class="metrica__titulo">Inscripciones</p>
+          <p class="metrica__titulo">Inscripciones por revisar</p>
           <p class="metrica__valor">{{ inscripciones }}</p>
-          <p class="metrica__nota">recibidas en total</p>
+          <p class="metrica__nota">esperando respuesta</p>
         </div>
         <div class="tarjeta metrica">
           <p class="metrica__titulo">Funciones próximas</p>
