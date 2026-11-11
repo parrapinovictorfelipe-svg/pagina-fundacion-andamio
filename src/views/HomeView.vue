@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import galeria from '@/assets/galeria.js'
 import Carousel from '@/components/Carousel.vue'
+import HeroSlider from '@/components/HeroSlider.vue'
+import MapaFundacion from '@/components/MapaFundacion.vue'
 import { supabase } from '@/lib/supabase'
 import { useContenido } from '@/lib/contenido'
 
@@ -82,6 +84,7 @@ const cargarFotos = async () => {
     const { data, error: errFotos } = await supabase
       .from('fotos_carrusel')
       .select('imagen_url, descripcion')
+      .eq('seccion', 'galeria')
       .order('orden', { ascending: true })
       .order('id', { ascending: true })
     if (errFotos) throw errFotos
@@ -94,7 +97,28 @@ const cargarFotos = async () => {
   }
 }
 
+// Fotos que rotan en la portada (vienen de Sitio web → Portada)
+const fotosPortada = ref([])
+
+const cargarPortada = async () => {
+  try {
+    const { data } = await supabase
+      .from('fotos_carrusel')
+      .select('imagen_url, descripcion')
+      .eq('seccion', 'portada')
+      .order('orden', { ascending: true })
+      .order('id', { ascending: true })
+    fotosPortada.value = (data || []).map((f) => ({
+      src: f.imagen_url,
+      alt: f.descripcion || 'Foto de portada',
+    }))
+  } catch (err) {
+    fotosPortada.value = []
+  }
+}
+
 onMounted(() => {
+  cargarPortada()
   cargarFunciones()
   cargarFotos()
   cargarProgramas()
@@ -141,7 +165,8 @@ onMounted(() => {
     </div>
 
     <div class="hero__marco">
-      <img :src="fotoHero" alt="Elenco de Fundación Andamio en escena" class="hero__foto" />
+      <HeroSlider v-if="fotosPortada.length > 1" :fotos="fotosPortada" />
+      <img v-else :src="fotosPortada[0]?.src || fotoHero" alt="Elenco de Fundación Andamio en escena" class="hero__foto" />
       <span class="hero__credito">{{ t('home.hero.credito') }}</span>
     </div>
   </section>
@@ -202,6 +227,8 @@ onMounted(() => {
       <Carousel v-if="fotosGaleria.length" :fotos="fotosGaleria" />
     </div>
   </section>
+
+  <MapaFundacion />
 
   <!-- ============ DONACIÓN ============ -->
   <section class="seccion donacion">

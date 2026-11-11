@@ -126,7 +126,7 @@ async function reiniciar() {
       <h1 class="titulo-l">Inscripción a talleres</h1>
       <p class="parrafo">
         Forma parte de nuestros espacios de formación artística y comunitaria
-        en Bogotá.
+        en Quibdó.
       </p>
     </div>
   </section>

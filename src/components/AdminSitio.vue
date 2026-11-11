@@ -2,12 +2,14 @@
 import { ref } from 'vue'
 import AdminContenido from '@/components/AdminContenido.vue'
 import AdminCarrusel from '@/components/AdminCarrusel.vue'
+import AdminEnlaces from '@/components/AdminEnlaces.vue'
 
 const pestana = ref('textos')
 const pestanas = [
   { id: 'textos', nombre: 'Textos e imágenes' },
   { id: 'navegacion', nombre: 'Navegación y pie de página' },
-  { id: 'carrusel', nombre: 'Carrusel' },
+  { id: 'portada', nombre: 'Portada' },
+  { id: 'galeria', nombre: 'Galería' },
 ]
 </script>
 
@@ -29,8 +31,12 @@ const pestanas = [
 
     <div class="cuerpo">
       <AdminContenido v-if="pestana === 'textos'" key="textos" :excluir="['nav.', 'pie.']" />
-      <AdminContenido v-else-if="pestana === 'navegacion'" key="navegacion" :incluir="['nav.', 'pie.']" />
-      <AdminCarrusel v-else />
+      <template v-else-if="pestana === 'navegacion'">
+        <AdminContenido key="navegacion" :incluir="['nav.', 'pie.']" />
+        <AdminEnlaces />
+      </template>
+      <AdminCarrusel v-else-if="pestana === 'portada'" key="portada" seccion="portada" />
+      <AdminCarrusel v-else key="galeria" seccion="galeria" />
     </div>
   </section>
 </template>

@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import logoLocal from '@/assets/logo-andamio.jpg'
+import { supabase } from '@/lib/supabase'
 import { useContenido } from '@/lib/contenido'
 
 const { t, listo } = useContenido()
@@ -17,14 +18,29 @@ const enlaces = computed(() => [
   { ruta: '/donaciones', texto: t('nav.donaciones') },
 ])
 
-// Las redes sin dirección no se muestran
+// Redes sociales y otros enlaces del pie (se administran en Sitio web)
+const enlacesPie = ref([])
+
+onMounted(async () => {
+  const { data } = await supabase
+    .from('enlaces_pie')
+    .select('*')
+    .order('orden', { ascending: true })
+    .order('id', { ascending: true })
+  enlacesPie.value = data || []
+})
+
+const esInterno = (u) => typeof u === 'string' && u.startsWith('/')
+const esSeguro = (u) => typeof u === 'string' && (u.startsWith('https://') || u.startsWith('/'))
+
 const redes = computed(() =>
-  [
-    { url: t('pie.instagram'), sigla: 'IG', nombre: 'Instagram' },
-    { url: t('pie.facebook'), sigla: 'FB', nombre: 'Facebook' },
-    { url: t('pie.youtube'), sigla: 'YT', nombre: 'YouTube' },
-    { url: t('pie.twitter'), sigla: 'TW', nombre: 'X / Twitter' },
-  ].filter((r) => r.url)
+  enlacesPie.value
+    .filter((e) => e.grupo === 'redes' && typeof e.url === 'string' && e.url.startsWith('https://'))
+    .map((e) => ({ ...e, texto: (e.sigla || e.etiqueta || '?').slice(0, 3).toUpperCase() }))
+)
+
+const otrosEnlaces = computed(() =>
+  enlacesPie.value.filter((e) => e.grupo === 'enlaces' && esSeguro(e.url))
 )
 
 const contacto = computed(() =>
@@ -69,6 +85,10 @@ const contacto = computed(() =>
           <li v-for="e in enlaces.slice(1)" :key="e.ruta">
             <RouterLink :to="e.ruta">{{ e.texto }}</RouterLink>
           </li>
+          <li v-for="o in otrosEnlaces" :key="'o' + o.id">
+            <RouterLink v-if="esInterno(o.url)" :to="o.url">{{ o.etiqueta }}</RouterLink>
+            <a v-else :href="o.url" target="_blank" rel="noopener">{{ o.etiqueta }}</a>
+          </li>
         </ul>
       </div>
 
@@ -80,12 +100,13 @@ const contacto = computed(() =>
         <div v-if="redes.length" class="pie__redes">
           <a
             v-for="r in redes"
-            :key="r.sigla"
+            :key="r.id"
             :href="r.url"
-            :aria-label="r.nombre"
+            :aria-label="r.etiqueta"
+            :title="r.etiqueta"
             target="_blank"
             rel="noopener"
-          >{{ r.sigla }}</a>
+          >{{ r.texto }}</a>
         </div>
       </div>
     </div>
@@ -238,4 +259,7 @@ const contacto = computed(() =>
   .pie__grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .pie__legal { flex-direction: column; }
 }
+</style>
+<style scoped>
+.pie__redes { flex-wrap: wrap; }
 </style>

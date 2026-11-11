@@ -2,6 +2,10 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 
+const props = defineProps({
+  seccion: { type: String, default: 'galeria' }
+})
+
 const fotos = ref([])
 const cargando = ref(true)
 const mensaje = ref('')
@@ -17,6 +21,7 @@ async function cargar() {
   const { data, error } = await supabase
     .from('fotos_carrusel')
     .select('*')
+    .eq('seccion', props.seccion)
     .order('orden', { ascending: true })
     .order('id', { ascending: true })
   if (error) mensaje.value = 'Error al cargar: ' + error.message
@@ -69,6 +74,7 @@ async function guardar() {
       orden: Number(form.value.orden) || 0
     }
     if (archivo.value) datos.imagen_url = await subirImagen(archivo.value)
+    datos.seccion = props.seccion
 
     const { error } = editandoId.value
       ? await supabase.from('fotos_carrusel').update(datos).eq('id', editandoId.value)
@@ -107,7 +113,7 @@ onMounted(cargar)
     <div class="encabezado">
       <div>
         <h1 class="titulo-l">Carrusel</h1>
-        <p class="subtitulo">Fotos de la galería de la página de inicio</p>
+        <p class="subtitulo">{{ seccion === 'portada' ? 'Fotos que rotan arriba del todo en el Inicio (si subes solo una, se queda fija)' : 'Fotos de la galería del Inicio' }}</p>
       </div>
       <button class="accion accion--principal" @click="abrirNueva">+ Nueva foto</button>
     </div>
