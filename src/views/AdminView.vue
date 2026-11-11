@@ -7,6 +7,7 @@ import AdminObras from '@/components/AdminObras.vue'
 import AdminBoleteria from '@/components/AdminBoleteria.vue'
 import AdminSitio from '@/components/AdminSitio.vue'
 import AdminInscripciones from '@/components/AdminInscripciones.vue'
+import AdminDonaciones from '@/components/AdminDonaciones.vue'
 
 const secciones = [
   { id: 'dashboard',     nombre: 'Dashboard' },
@@ -58,13 +59,7 @@ async function cerrarSesion() {
 
       <AdminInscripciones v-else-if="seccion === 'inscripciones'" />
 
-      <section v-else-if="seccion === 'donaciones'">
-        <h1 class="titulo-l">Donaciones</h1>
-        <p class="subtitulo">Aportes recibidos</p>
-        <p style="color: var(--gris)">
-          Esta sección se conecta en el siguiente paso, junto con la página Donaciones.
-        </p>
-      </section>
+      <AdminDonaciones v-else-if="seccion === 'donaciones'" />
 
       <AdminSitio v-else />
     </main>
