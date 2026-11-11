@@ -123,6 +123,10 @@ async function donar() {
     })
     if (error) throw error
     resultado.value = data
+    if (frecuencia.value === 'unica' && linkFinal.value) {
+      window.location.href = linkFinal.value
+      return
+    }
     enviado.value = true
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (e) {
